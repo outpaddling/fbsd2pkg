@@ -100,7 +100,7 @@ if [ $new_pkg = 1 ]; then
     #   Convert Makefile
     ##########################################################################
     
-    awk -v maintainer=$maintainer -f ~/scripts/fbsd2pkg.awk \
+    awk -v maintainer=$maintainer -f fbsd2pkg.awk \
 	$port_path/Makefile > Makefile
     createbuildlink > buildlink3.mk
     printf '@comment $NetBSD$\n' > PLIST
