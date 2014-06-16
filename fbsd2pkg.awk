@@ -178,10 +178,10 @@ END {
     {
 	printf("\n# Adapt REINPLACE commands to SUBST:\n");
 	printf("SUBST_CLASSES+=\t\t\n");
-	printf("SUBST_STAGE.+=\t\n");
-	printf("SUBST_MESSAGE.+=\t\n");
-	printf("SUBST_FILES.+=\t\n");
-	printf("SUBST_SED.+=\t\n");
+	printf("SUBST_STAGE.=\t\n");
+	printf("SUBST_MESSAGE.=\t\n");
+	printf("SUBST_FILES.=\t\n");
+	printf("SUBST_SED.=\t-e 's|||g'\n");
     }
 
     if ( configure_env != "" )
