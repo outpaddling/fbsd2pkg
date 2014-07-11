@@ -90,7 +90,7 @@ if [ $new_pkg = 1 ]; then
 	fi
     
 	for dir in files patches; do
-	    if [ 0`ls -A $dir` = 0 ]; then
+	    if [ "0`ls -A $dir`" = 0 ]; then
 		rmdir $dir
 	    fi
 	done

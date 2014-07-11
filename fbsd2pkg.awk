@@ -89,6 +89,16 @@ BEGIN {
 		printf("#USE_TOOLS=\t%s\n", $f);
 	}
     }
+    else if ( $1 ~ "^ONLY_FOR_ARCHS" )
+    {
+	for (f = 2; f <= NF; ++f)
+	{
+	    if ( $f == "amd64" )
+		only_for_platform = only_for_platform " *-*-x86_64";
+	    else
+		only_for_platform = only_for_platform " *-*-" $f;
+	}
+    }
     else if ( $1 ~ "_DEPENDS" )
     {
 	has_depends = 1;
@@ -118,7 +128,13 @@ BEGIN {
 	pkgnamesuffix=$0;
     else if ( $0 != "" )
     {
+	# Convert what we can in FreeBSD ports code that's left commented out
 	sub("STAGEDIR", "DESTDIR", $0);
+	
+	if ( ($0 ~ "COPYTREE") && (use_tools !~ "pax") )
+	    use_tools = use_tools " pax";
+	sub("\\${COPYTREE_.+}", "pax -rw", $0);
+	
 	printf("#%s\n", $0);
 	if ( $0 ~ "REINPLACE_CMD" )
 	    use_subst = 1;
@@ -149,6 +165,8 @@ END {
 
     printf("\n# Pessimistic assumption.  Test and change if possible.\n");
     printf("MAKE_JOBS_SAFE=\tno\n");
+    
+    printf("\nONLY_FOR_PLATFORM=\t%s\n", only_for_platform);
     
     printf("\n# Just assuming C and C++: Adjust this!\nUSE_LANGUAGES=\tc c++\n");
     if ( use_tools != "" )
