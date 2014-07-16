@@ -24,6 +24,8 @@ BEGIN {
 	sub("\\${PORTNAME}", portname, distname);
 	sub("\\${PORTVERSION}", portversion, distname);
     }
+    else if ( $1 ~ "^EXTRACT_SUFX" )
+	extract_sufx = $2;
     else if ( $1 ~ "^CATEGORIES" )
 	category = $2;
     else if ( $1 ~ "^MASTER_SITES" )
@@ -31,8 +33,11 @@ BEGIN {
 	master_sites = $2;
 	if ( master_sites ~ "github" )
 	    use_curl = 1;
-	else if ( master_sites == "SF" )
+	else if ( master_sites ~ "^SF" )
+	{
+	    fbsd_master_sites = master_sites;
 	    master_sites = "${MASTER_SITE_SOURCEFORGE:=" portname "/}";
+	}
 	sub("\\${PORTNAME}", portname, master_sites);
 	sub("\\${PORTVERSION}", portversion, master_sites);
     }
@@ -150,6 +155,8 @@ END {
     else
 	printf("\nDISTNAME=\t%s-%s\n", portname, portversion);
     printf("CATEGORIES=\t%s\n", category);
+    if ( fbsd_master_sites != "" )
+	printf("# FreeBSD MASTER_SITES: %s\n", fbsd_master_sites);
     printf("MASTER_SITES=\t%s\n", master_sites);
     if ( extract_sufx != "" )
 	printf("EXTRACT_SUFX=\t%s\n", extract_sufx);
