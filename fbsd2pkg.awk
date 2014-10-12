@@ -22,7 +22,11 @@ BEGIN {
     {
 	distname = $2;
 	sub("\\${PORTNAME}", portname, distname);
-	sub("\\${PORTVERSION}", portversion, distname);
+    }
+    else if ( $1 ~ "^DISTFILES" )
+    {
+	distfiles = $2;
+	sub("\\${PORTNAME}", portname, distfiles);
     }
     else if ( $1 ~ "^EXTRACT_SUFX" )
 	extract_sufx = $2;
@@ -39,7 +43,6 @@ BEGIN {
 	    master_sites = "${MASTER_SITE_SOURCEFORGE:=" portname "/}";
 	}
 	sub("\\${PORTNAME}", portname, master_sites);
-	sub("\\${PORTVERSION}", portversion, master_sites);
     }
     else if ( $1 ~ "^MAINTAINER" )
     {
@@ -86,12 +89,14 @@ BEGIN {
 		use_tools = use_tools "pkg-config";
 	    else if ( $f == "gmake" )
 		use_tools = use_tools "gmake";
+	    else if ( $f == "libtool" )
+		use_libtool = "yes";
 	    else if ( $f == "shebangfix" )
 	    {
 		shebang_fix = 1;
 	    }
 	    else
-		printf("#USE_TOOLS=\t%s\n", $f);
+		printf("# Unknown tool: USE_TOOLS=\t%s\n", $f);
 	}
     }
     else if ( $1 ~ "^ONLY_FOR_ARCHS" )
@@ -113,7 +118,6 @@ BEGIN {
     {
 	wrksrc = $0;
 	sub("\\${PORTNAME}", portname, wrksrc);
-	sub("\\${PORTVERSION}", portversion, wrksrc);
     }
     else if ( $1 ~ "^NO_BUILD" )
 	no_build = 1;
@@ -149,11 +153,13 @@ BEGIN {
 END {
     if ( distname != "" )
     {
-	printf("\nPKGNAME=\t%s-%s\n", portname, portversion);
+	printf("\nPKGNAME=\t%s-${PORTVERSION}\n", portname);
 	printf("DISTNAME=\t%s\n", distname);
     }
     else
-	printf("\nDISTNAME=\t%s-%s\n", portname, portversion);
+	printf("\nDISTNAME=\t%s-${PORTVERSION}\n", portname);
+    if ( distfiles != "" )
+	printf("DISTFILES=\t%s\n", distfiles);
     printf("CATEGORIES=\t%s\n", category);
     if ( fbsd_master_sites != "" )
 	printf("# FreeBSD MASTER_SITES: %s\n", fbsd_master_sites);
@@ -178,6 +184,8 @@ END {
     printf("\n# Just assuming C and C++: Adjust this!\nUSE_LANGUAGES=\tc c++\n");
     if ( use_tools != "" )
 	printf("USE_TOOLS+=\t%s\n", use_tools);
+    if ( use_libtool == "yes" )
+	printf("USE_LIBTOOL=\tyes\n");
     if ( gnu_configure )
 	printf("GNU_CONFIGURE=\tyes\n");
     if ( shebang_fix )
@@ -231,6 +239,7 @@ END {
     if ( use_curl )
 	printf("\nFETCH_USING=\tcurl\n");
 
+    printf("\nPORTVERSION=\t%s\n", portversion);
     printf("DATADIR=\t${PREFIX}/share/%s\n", portname);
     printf("DOCSDIR=\t${PREFIX}/share/doc/%s\n", portname);
     if ( pkgnameprefix != "" )
