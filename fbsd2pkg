@@ -114,6 +114,8 @@ fi
 
 $EDITOR Makefile
 $EDITOR buildlink3.mk
+
+set -x
 $make deinstall
 $make clean
 $make makesum
@@ -123,6 +125,7 @@ $make
 $make install
 if [ `uname` != Darwin ]; then
     $make print-PLIST > PLIST
+    $EDITOR PLIST
     $make clean
     $make deinstall
     $make install
