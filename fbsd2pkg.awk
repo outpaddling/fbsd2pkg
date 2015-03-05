@@ -64,6 +64,16 @@ BEGIN {
 	    sub("GPL", "gnu-gpl-", license);
 	    known_license = 1;
 	}
+	else if ( license == "BSD3CLAUSE" )
+	{
+	    license = "3-clause-bsd";
+	    known_license = 1;
+	}
+	else if ( license == "BSD2CLAUSE" )
+	{
+	    license = "2-clause-bsd";
+	    known_license = 1;
+	}
     }
     else if ( $1 ~ "^GNU_CONFIGURE" )
 	gnu_configure = 1;
