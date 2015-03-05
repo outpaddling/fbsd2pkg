@@ -260,6 +260,7 @@ END {
     printf("#.include \"options.mk\"\n");
     
     printf("\n# You may need this, especially if using do-install.\n");
+    printf("\n# Note: Depends on PLIST.\n");
     printf("#AUTO_MKDIRS=\tyes\n");
     
     printf("\n");
