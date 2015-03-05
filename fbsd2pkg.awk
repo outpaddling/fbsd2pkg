@@ -220,7 +220,7 @@ END {
 	printf("SUBST_STAGE.=\tpost-patch\n");
 	printf("SUBST_MESSAGE.=\t\n");
 	printf("SUBST_FILES.=\t\n");
-	printf("SUBST_SED.=\t-e 's|||g'\n");
+	printf("SUBST_SED.=\t\n");
     }
 
     if ( configure_env != "" )
