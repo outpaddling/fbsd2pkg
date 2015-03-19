@@ -216,7 +216,10 @@ END {
     
     printf("\n# Just assuming C and C++: Adjust this!\nUSE_LANGUAGES=\tc c++\n");
     if ( use_tools != "" )
+    {
+	sub("^ ", "", use_tools);   # Remove leading space from first add       
 	printf("USE_TOOLS+=\t%s\n", use_tools);
+    }
     if ( use_libtool == "yes" )
 	printf("USE_LIBTOOL=\tyes\n");
     if ( gnu_configure )
