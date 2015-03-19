@@ -32,17 +32,18 @@ BEGIN {
 	extract_sufx = $2;
     else if ( $1 ~ "^CATEGORIES" )
 	category = $2;
+    # Check this before MASTER_SITES!
+    else if ( $1 ~ "^MASTER_SITE_SUBDIR" )
+	master_site_subdir = $2;
     else if ( $1 ~ "^MASTER_SITES" )
     {
 	master_sites = $2;
 	if ( master_sites ~ "github" )
 	    use_curl = 1;
 	else if ( master_sites ~ "^SF" )
-	{
-	    fbsd_master_sites = master_sites;
-	    master_sites = "${MASTER_SITE_SOURCEFORGE:=" portname "/}";
-	}
-	sub("\\${PORTNAME}", portname, master_sites);
+	    sf_master_sites = master_sites;
+	else
+	    sub("\\${PORTNAME}", portname, master_sites);
     }
     else if ( $1 ~ "^MAINTAINER" )
     {
@@ -148,9 +149,9 @@ BEGIN {
     else if ( $1 ~ "^USE_PERL" )
 	use_tools = use_tools " perl:" $2;
     else if ( $1 ~ "^PKGNAMEPREFIX" )
-	pkgnameprefix=$0;
+	pkgnameprefix=$2;
     else if ( $1 ~ "^PKGNAMESUFFIX" )
-	pkgnamesuffix=$0;
+	pkgnamesuffix=$2;
     else if ( $0 != "" )
     {
 	# Convert what we can in FreeBSD ports code that's left commented out
@@ -167,6 +168,14 @@ BEGIN {
 }
 
 END {
+    if ( pkgnameprefix != "" )
+    {
+	portname = pkgnameprefix portname
+    }
+    if ( pkgnamesuffix != "" )
+    {
+	portname = portname pkgnamesuffix
+    }
     if ( distname != "" )
     {
 	printf("\nPKGNAME=\t%s-${PORTVERSION}\n", portname);
@@ -177,9 +186,17 @@ END {
     if ( distfiles != "" )
 	printf("DISTFILES=\t%s\n", distfiles);
     printf("CATEGORIES=\t%s\n", category);
-    if ( fbsd_master_sites != "" )
-	printf("# FreeBSD MASTER_SITES: %s\n", fbsd_master_sites);
+
+    if ( sf_master_sites != "" )
+    {
+	if ( master_site_subdir != "" )
+	    master_sites = "${MASTER_SITE_SOURCEFORGE:=" master_site_subdir "}";
+	else
+	    master_sites = "${MASTER_SITE_SOURCEFORGE:=" portname "/}";
+	printf("# FreeBSD MASTER_SITES: %s\n", sf_master_sites);
+    }
     printf("MASTER_SITES=\t%s\n", master_sites);
+    
     if ( extract_sufx != "" )
 	printf("EXTRACT_SUFX=\t%s\n", extract_sufx);
     
@@ -258,10 +275,6 @@ END {
     printf("\nPORTVERSION=\t%s\n", portversion);
     printf("DATADIR=\t${PREFIX}/share/%s\n", portname);
     printf("DOCSDIR=\t${PREFIX}/share/doc/%s\n", portname);
-    if ( pkgnameprefix != "" )
-	printf("%s\n", pkgnameprefix);
-    if ( pkgnamesuffix != "" )
-	printf("%s\n", pkgnamesuffix);
     
     printf("\n# Sets OPSYS, OS_VERSION, MACHINE_ARCH, etc..\n");
     printf("#.include \"../../mk/bsd.prefs.mk\"\n");
