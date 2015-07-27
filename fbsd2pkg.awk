@@ -322,6 +322,8 @@ END {
 	printf("# Guess based on FreeBSD USE_PYTHON_RUN=yes\n");
 	printf(".include \"../../lang/python/application.mk\"\n");
     }
+    if ( use_python_distutils )
+	printf(".include \"../../lang/python/extension.mk\"\n");
     if ( buildlink != "" )
     {
 	sub("^ ", "", buildlink);   # Remove leading space from first add

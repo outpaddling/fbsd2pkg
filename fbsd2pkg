@@ -114,7 +114,7 @@ if [ $new_pkg = 1 ]; then
     ##########################################################################
     
     printf "Converting Makefile...\n"
-    awk -v maintainer=$maintainer -f /home/bacon/Pkgsrc/pkg-1/libexec/fbsd2pkg/fbsd2pkg.awk \
+    awk -v maintainer=$maintainer -f fbsd2pkg.awk \
 	$port_path/Makefile > Makefile
     pause
     printf "Generating buildlink3.mk...\n"
