@@ -20,6 +20,19 @@ usage()
 
 
 ##########################################################################
+#   Function description:
+#       Pause until user presses return
+##########################################################################
+
+pause()
+{
+    local junk
+    
+    printf "Press return to continue..."
+    read junk
+}
+
+##########################################################################
 #   Main
 ##########################################################################
 
@@ -100,9 +113,13 @@ if [ $new_pkg = 1 ]; then
     #   Convert Makefile
     ##########################################################################
     
-    awk -v maintainer=$maintainer -f fbsd2pkg.awk \
+    printf "Converting Makefile...\n"
+    awk -v maintainer=$maintainer -f /home/bacon/Pkgsrc/pkg-1/libexec/fbsd2pkg/fbsd2pkg.awk \
 	$port_path/Makefile > Makefile
+    pause
+    printf "Generating buildlink3.mk...\n"
     createbuildlink > buildlink3.mk
+    pause
     printf '@comment $NetBSD$\n' > PLIST
 else
     cd $port_name
@@ -114,6 +131,7 @@ fi
 
 $EDITOR Makefile
 $EDITOR buildlink3.mk
+pause
 
 set -x
 $make deinstall

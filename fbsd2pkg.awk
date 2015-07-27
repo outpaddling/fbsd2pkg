@@ -22,6 +22,12 @@ BEGIN {
     {
 	distname = $2;
 	sub("\\${PORTNAME}", portname, distname);
+	sub("\\${PORTVERSION}", portversion, distname);
+    }
+    else if ( $1 ~ "^DIST_SUBDIR" )
+    {
+	dist_subdir = $2;
+	sub("\\${PORTNAME}", portname, dist_subdir);
     }
     else if ( $1 ~ "^DISTFILES" )
     {
@@ -112,6 +118,10 @@ BEGIN {
 	    {
 		shebang_fix = 1;
 	    }
+	    else if ( $f == "ncurses" )
+	    {
+		buildlink = buildlink "devel/ncurses";
+	    }
 	    else
 		printf("# Unknown tool: USE_TOOLS=\t%s\n", $f);
 	}
@@ -183,6 +193,11 @@ END {
     }
     else
 	printf("\nDISTNAME=\t%s-${PORTVERSION}\n", portname);
+    if ( dist_subdir != "" )
+    {
+	printf("\nPKGNAME=\t%s-${PORTVERSION}\n", portname);
+	printf("DIST_SUBDIR=\t%s\n", dist_subdir);
+    }
     if ( distfiles != "" )
 	printf("DISTFILES=\t%s\n", distfiles);
     printf("CATEGORIES=\t%s\n", category);
@@ -295,9 +310,18 @@ END {
 	printf("# Guess based on FreeBSD USE_PYTHON_RUN=yes\n");
 	printf(".include \"../../lang/python/application.mk\"\n");
     }
+    if ( buildlink != "" )
+    {
+	sub("^ ", "", buildlink);   # Remove leading space from first add
+	n = split(buildlink, pkgs, " ");
+	for ( c in pkgs )
+	{
+	    printf("# Guess based on USES=\n.include \"../../%s/buildlink3.mk\"\n", pkgs[c]);
+	}
+    }
     if ( has_depends )
     {
-	printf("# Add any _DEPENDS that have a buildlink3.mk\n");
+	printf("# Convert any _DEPENDS above that have a buildlink3.mk\n");
 	printf("#.include \"../..///buildlink3.mk\"\n");
     }
     printf(".include \"../../mk/bsd.pkg.mk\"\n");
