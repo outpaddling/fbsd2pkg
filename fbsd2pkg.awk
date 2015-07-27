@@ -21,18 +21,17 @@ BEGIN {
     else if ( $1 ~ "^DISTNAME" )
     {
 	distname = $2;
-	sub("\\${PORTNAME}", portname, distname);
-	sub("\\${PORTVERSION}", portversion, distname);
+	gsub("\\${PORTNAME}", portname, distname);
     }
     else if ( $1 ~ "^DIST_SUBDIR" )
     {
 	dist_subdir = $2;
-	sub("\\${PORTNAME}", portname, dist_subdir);
+	gsub("\\${PORTNAME}", portname, dist_subdir);
     }
     else if ( $1 ~ "^DISTFILES" )
     {
 	distfiles = $2;
-	sub("\\${PORTNAME}", portname, distfiles);
+	gsub("\\${PORTNAME}", portname, distfiles);
     }
     else if ( $1 ~ "^EXTRACT_SUFX" )
 	extract_sufx = $2;
@@ -49,7 +48,7 @@ BEGIN {
 	else if ( master_sites ~ "^SF" )
 	    sf_master_sites = master_sites;
 	else
-	    sub("\\${PORTNAME}", portname, master_sites);
+	    gsub("\\${PORTNAME}", portname, master_sites);
     }
     else if ( $1 ~ "^MAINTAINER" )
     {
@@ -63,12 +62,12 @@ BEGIN {
 	known_license = 0;
 	if ( license ~ "^LGPL" )
 	{
-	    sub("GPL", "gnu-lgpl-", license);
+	    gsub("GPL", "gnu-lgpl-", license);
 	    known_license = 1;
 	}
 	else if ( license ~ "^GPL" )
 	{
-	    sub("GPL", "gnu-gpl-", license);
+	    gsub("GPL", "gnu-gpl-", license);
 	    known_license = 1;
 	}
 	else if ( license == "BSD3CLAUSE" )
@@ -144,7 +143,7 @@ BEGIN {
     else if ( $1 ~ "^WRKSRC" )
     {
 	wrksrc = $0;
-	sub("\\${PORTNAME}", portname, wrksrc);
+	gsub("\\${PORTNAME}", portname, wrksrc);
     }
     else if ( $1 ~ "^NO_BUILD" )
 	no_build = 1;
@@ -174,11 +173,11 @@ BEGIN {
     else if ( $0 != "" )
     {
 	# Convert what we can in FreeBSD ports code that's left commented out
-	sub("STAGEDIR", "DESTDIR", $0);
+	gsub("STAGEDIR", "DESTDIR", $0);
 	
 	if ( ($0 ~ "COPYTREE") && (use_tools !~ "pax") )
 	    use_tools = use_tools " pax";
-	sub("\\${COPYTREE_.+}", "pax -rw", $0);
+	gsub("\\${COPYTREE_.+}", "pax -rw", $0);
 	
 	printf("#%s\n", $0);
 	if ( $0 ~ "REINPLACE_CMD" )
@@ -242,7 +241,7 @@ END {
     printf("\n# Just assuming C and C++: Adjust this!\nUSE_LANGUAGES=\tc c++\n");
     if ( use_tools != "" )
     {
-	sub("^ ", "", use_tools);   # Remove leading space from first add       
+	gsub("^ ", "", use_tools);   # Remove leading space from first add       
 	printf("USE_TOOLS+=\t%s\n", use_tools);
     }
     if ( use_python_distutils == 1 )
@@ -326,7 +325,7 @@ END {
 	printf(".include \"../../lang/python/extension.mk\"\n");
     if ( buildlink != "" )
     {
-	sub("^ ", "", buildlink);   # Remove leading space from first add
+	gsub("^ ", "", buildlink);   # Remove leading space from first add
 	n = split(buildlink, pkgs, " ");
 	for ( c in pkgs )
 	{
