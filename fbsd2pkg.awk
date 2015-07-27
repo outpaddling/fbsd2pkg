@@ -155,7 +155,16 @@ BEGIN {
 	build_target = $0;
     }
     else if ( $1 ~ "^USE_PYTHON" )
-	use_python_run=1;
+    {
+	n = split($0, uses, "[ \t]");
+	for (c = 2; c <= n; ++c)
+	{
+	    if ( uses[c] == "run" )
+		use_python_run=1;
+	    else if ( uses[c] == "distutils" )
+		use_python_distutils=1;
+	}
+    }
     else if ( $1 ~ "^USE_PERL" )
 	use_tools = use_tools " perl:" $2;
     else if ( $1 ~ "^PKGNAMEPREFIX" )
@@ -227,7 +236,8 @@ END {
     printf("\n# Pessimistic assumption.  Test and change if possible.\n");
     printf("MAKE_JOBS_SAFE=\tno\n");
     
-    printf("\nONLY_FOR_PLATFORM=\t%s\n", only_for_platform);
+    if ( only_for_platform != "" )
+	printf("\nONLY_FOR_PLATFORM=\t%s\n", only_for_platform);
     
     printf("\n# Just assuming C and C++: Adjust this!\nUSE_LANGUAGES=\tc c++\n");
     if ( use_tools != "" )
@@ -235,6 +245,8 @@ END {
 	sub("^ ", "", use_tools);   # Remove leading space from first add       
 	printf("USE_TOOLS+=\t%s\n", use_tools);
     }
+    if ( use_python_distutils == 1 )
+	printf("PYDISTUTILSPKG=\tyes\n");
     if ( use_libtool == "yes" )
 	printf("USE_LIBTOOL=\tyes\n");
     if ( gnu_configure )
