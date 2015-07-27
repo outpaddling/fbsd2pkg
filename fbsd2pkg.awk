@@ -73,7 +73,7 @@ BEGIN {
 	}
 	else if ( license == "BSD3CLAUSE" )
 	{
-	    license = "3-clause-bsd";
+	    license = "modified-bsd";
 	    known_license = 1;
 	}
 	else if ( license == "BSD2CLAUSE" )
@@ -229,7 +229,7 @@ END {
     printf("\n%s\n", comment);
     
     if ( known_license )
-	printf("LICENSE=\t%s\n", license);
+	printf("# Double-check this\nLICENSE=\t%s\n", license);
     else
 	printf("#LICENSE=\t%s\n", license);
 
