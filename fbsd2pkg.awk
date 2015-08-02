@@ -95,11 +95,11 @@ BEGIN {
 	{
 	    if ( $f == "tar:bzip2" )
 		extract_sufx=".tar.bz2";
-	    if ( $f == "tar:tgz" )
+	    else if ( $f == "tar:tgz" )
 		extract_sufx=".tgz";
-	    if ( $f == "tar:xz" )
+	    else if ( $f == "tar:xz" )
 		extract_sufx=".tar.xz";
-	    if ( $f == "tar:txz" )
+	    else if ( $f == "tar:txz" )
 		extract_sufx=".txz";
 	    else if ( $f == "zip" )
 		extract_sufx=".zip";
