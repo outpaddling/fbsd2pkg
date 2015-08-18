@@ -89,6 +89,14 @@ BEGIN {
 	configure_args = $0;
     else if ( $1 ~ "^CFLAGS" )
 	cflags = $0;
+    else if ( $1 ~ "^CXXFLAGS" )
+	cxxflags = $0;
+    else if ( $1 ~ "^FFLAGS" )
+	fflags = $0;
+    else if ( $1 ~ "^LDFLAGS" )
+	ldlags = $0;
+    else if ( $1 ~ "^MAKEFILE" )
+	make_file = $1;
     else if ( $1 ~ "^USES" )
     {
 	for (f = 2; f <= NF; ++f)
@@ -218,6 +226,8 @@ END {
 	    master_sites = "${MASTER_SITE_SOURCEFORGE:=" portname "/}";
 	printf("# FreeBSD MASTER_SITES: %s\n", sf_master_sites);
     }
+    else
+	printf("# FreeBSD MASTER_SITE_SUBDIR: %s\n", master_site_subdir);
     printf("MASTER_SITES=\t%s\n", master_sites);
     
     if ( extract_sufx != "" )
@@ -294,7 +304,25 @@ END {
 	printf("\n");
 	printf("%s\n", cflags);
     }
-    
+    if ( cxxflags != "" )
+    {
+	printf("\n");
+	printf("%s\n", cxxflags);
+    }
+    if ( fflags != "" )
+    {
+	printf("\n");
+	printf("%s\n", fflags);
+    }
+    if ( ldflags != "" )
+    {
+	printf("\n");
+	printf("%s\n", ldflags);
+    }
+
+    if ( make_file != "" )
+	printf("MAKE_FILE=\t%s\n", make_file);
+
     if ( build_target != "" )
 	printf("BUILD_TARGET=\t%s\n", build_target);
 
@@ -304,6 +332,8 @@ END {
     printf("\nPORTVERSION=\t%s\n", portversion);
     printf("DATADIR=\t${PREFIX}/share/%s\n", portname);
     printf("DOCSDIR=\t${PREFIX}/share/doc/%s\n", portname);
+    if ( master_sites ~ "CHEESESHOP" )
+	printf("MASTER_SITE_CHEESESHOP= http://pypi.python.org/packages\n");
     
     printf("\n# Sets OPSYS, OS_VERSION, MACHINE_ARCH, etc..\n");
     printf("#.include \"../../mk/bsd.prefs.mk\"\n");
@@ -312,7 +342,7 @@ END {
     printf("#.include \"options.mk\"\n");
     
     printf("\n# You may need this, especially if using do-install.\n");
-    printf("\n# Note: Depends on PLIST.\n");
+    printf("# Note: Depends on PLIST.\n");
     printf("#AUTO_MKDIRS=\tyes\n");
     
     printf("\n");
