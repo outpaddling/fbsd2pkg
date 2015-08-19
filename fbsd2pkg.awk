@@ -96,7 +96,7 @@ BEGIN {
     else if ( $1 ~ "^LDFLAGS" )
 	ldlags = $0;
     else if ( $1 ~ "^MAKEFILE" )
-	make_file = $1;
+	make_file = $2;
     else if ( $1 ~ "^USES" )
     {
 	for (f = 2; f <= NF; ++f)
