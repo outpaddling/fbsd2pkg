@@ -226,7 +226,7 @@ END {
 	    master_sites = "${MASTER_SITE_SOURCEFORGE:=" portname "/}";
 	printf("# FreeBSD MASTER_SITES: %s\n", sf_master_sites);
     }
-    else
+    else if ( master_site_subdir != "" )
 	printf("# FreeBSD MASTER_SITE_SUBDIR: %s\n", master_site_subdir);
     printf("MASTER_SITES=\t%s\n", master_sites);
     
