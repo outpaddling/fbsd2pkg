@@ -15,13 +15,18 @@ BEGIN {
 
 {
     if ( $1 ~ "^PORTNAME" )
+    {
+	# Start here and override if distname, pkgname prefix, etc. specified
 	portname = $2;
+	pkgname = portname;
+	distname = portname;
+    }
     else if ( $1 ~ "^PORTVERSION" )
 	portversion = $2;
     else if ( $1 ~ "^DISTNAME" )
     {
-	distname = $2;
-	gsub("\\${PORTNAME}", portname, distname);
+	explicit_distname = $2;
+	gsub("\\${PORTNAME}", portname, explicit_distname);
     }
     else if ( $1 ~ "^DIST_SUBDIR" )
     {
@@ -47,6 +52,8 @@ BEGIN {
 	    use_curl = 1;
 	else if ( master_sites ~ "^SF" )
 	    sf_master_sites = master_sites;
+	else if ( master_sites == "CHEESESHOP" )
+	    master_sites = "\${CHEESESHOP}";
 	else
 	    gsub("\\${PORTNAME}", portname, master_sites);
     }
@@ -78,6 +85,11 @@ BEGIN {
 	else if ( license == "BSD2CLAUSE" )
 	{
 	    license = "2-clause-bsd";
+	    known_license = 1;
+	}
+	else if ( license == "MIT" )
+	{
+	    license = "mit";
 	    known_license = 1;
 	}
     }
@@ -175,13 +187,18 @@ BEGIN {
     else if ( $1 ~ "^USE_PERL" )
 	use_tools = use_tools " perl:" $2;
     else if ( $1 ~ "^PKGNAMEPREFIX" )
+    {
 	pkgnameprefix=$2;
+	gsub("\\${PYTHON_PKGNAMEPREFIX}", "\${PYPKGPREFIX}-", pkgnameprefix);
+    }
     else if ( $1 ~ "^PKGNAMESUFFIX" )
 	pkgnamesuffix=$2;
     else if ( $0 != "" )
     {
 	# Convert what we can in FreeBSD ports code that's left commented out
 	gsub("STAGEDIR", "DESTDIR", $0);
+	gsub("\\${PYTHON_PKGNAMEPREFIX}", "\${PYPKGPREFIX}-", $0);
+	gsub("\\${PORTSDIR}", "../..", $0);
 	
 	if ( ($0 ~ "COPYTREE") && (use_tools !~ "pax") )
 	    use_tools = use_tools " pax";
@@ -196,22 +213,27 @@ BEGIN {
 END {
     if ( pkgnameprefix != "" )
     {
-	portname = pkgnameprefix portname
+	pkgname = pkgnameprefix pkgname
     }
     if ( pkgnamesuffix != "" )
     {
-	portname = portname pkgnamesuffix
+	pkgname = pkgname pkgnamesuffix
     }
-    if ( distname != "" )
+    if ( explicit_distname != "" )
     {
-	printf("\nPKGNAME=\t%s-${PORTVERSION}\n", portname);
-	printf("DISTNAME=\t%s\n", distname);
+	printf("\nDISTNAME=\t%s\n", distname);
+	printf("PKGNAME=\t%s-${PORTVERSION}\n", pkgname);
+    }
+    else if ( distname != pkgname )
+    {
+	printf("\nDISTNAME=\t%s-${PORTVERSION}\n", distname);
+	printf("PKGNAME=\t%s-${PORTVERSION}\n", pkgname);
     }
     else
-	printf("\nDISTNAME=\t%s-${PORTVERSION}\n", portname);
+	printf("\nDISTNAME=\t%s-${PORTVERSION}\n", distname);
     if ( dist_subdir != "" )
     {
-	printf("\nPKGNAME=\t%s-${PORTVERSION}\n", portname);
+	printf("\nPKGNAME=\t%s-${PORTVERSION}\n", pkgname);
 	printf("DIST_SUBDIR=\t%s\n", dist_subdir);
     }
     if ( distfiles != "" )
@@ -333,7 +355,8 @@ END {
     printf("DATADIR=\t${PREFIX}/share/%s\n", portname);
     printf("DOCSDIR=\t${PREFIX}/share/doc/%s\n", portname);
     if ( master_sites ~ "CHEESESHOP" )
-	printf("MASTER_SITE_CHEESESHOP= http://pypi.python.org/packages\n");
+	printf("CHEESESHOP=\thttp://pypi.python.org/packages/source/%c/%s/\n",
+		substr(portname,1,1),portname);
     
     printf("\n# Sets OPSYS, OS_VERSION, MACHINE_ARCH, etc..\n");
     printf("#.include \"../../mk/bsd.prefs.mk\"\n");
