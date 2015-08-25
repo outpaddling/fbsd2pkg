@@ -221,7 +221,11 @@ END {
     }
     if ( explicit_distname != "" )
     {
-	printf("\nDISTNAME=\t%s\n", distname);
+	# Extract stem for cheeseshop subdir
+	distname_stem = explicit_distname;
+	if ( (pos=index(distname_stem, "-")) != 0 )
+	    distname_stem = substr(distname_stem, 1, pos-1);
+	printf("\nDISTNAME=\t%s\n", explicit_distname);
 	printf("PKGNAME=\t%s-${PORTVERSION}\n", pkgname);
     }
     else if ( distname != pkgname )
@@ -356,7 +360,7 @@ END {
     printf("DOCSDIR=\t${PREFIX}/share/doc/%s\n", portname);
     if ( master_sites ~ "CHEESESHOP" )
 	printf("CHEESESHOP=\thttp://pypi.python.org/packages/source/%c/%s/\n",
-		substr(portname,1,1),portname);
+		substr(distname_stem,1,1),distname_stem);
     
     printf("\n# Sets OPSYS, OS_VERSION, MACHINE_ARCH, etc..\n");
     printf("#.include \"../../mk/bsd.prefs.mk\"\n");
