@@ -26,6 +26,7 @@ BEGIN {
     else if ( $1 ~ "^DISTNAME" )
     {
 	explicit_distname = $2;
+	distname = explicit_distname;
 	gsub("\\${PORTNAME}", portname, explicit_distname);
     }
     else if ( $1 ~ "^DIST_SUBDIR" )
@@ -221,10 +222,6 @@ END {
     }
     if ( explicit_distname != "" )
     {
-	# Extract stem for cheeseshop subdir
-	distname_stem = explicit_distname;
-	if ( (pos=index(distname_stem, "-")) != 0 )
-	    distname_stem = substr(distname_stem, 1, pos-1);
 	printf("\nDISTNAME=\t%s\n", explicit_distname);
 	printf("PKGNAME=\t%s-${PORTVERSION}\n", pkgname);
     }
@@ -359,8 +356,15 @@ END {
     printf("DATADIR=\t${PREFIX}/share/%s\n", portname);
     printf("DOCSDIR=\t${PREFIX}/share/doc/%s\n", portname);
     if ( master_sites ~ "CHEESESHOP" )
+    {
+	# Extract stem for cheeseshop subdir
+	distname_stem = distname;
+	if ( (pos=index(distname_stem, "-")) != 0 )
+	    distname_stem = substr(distname_stem, 1, pos-1);
+
 	printf("CHEESESHOP=\thttp://pypi.python.org/packages/source/%c/%s/\n",
 		substr(distname_stem,1,1),distname_stem);
+    }
     
     printf("\n# Sets OPSYS, OS_VERSION, MACHINE_ARCH, etc..\n");
     printf("#.include \"../../mk/bsd.prefs.mk\"\n");
@@ -379,7 +383,7 @@ END {
 	printf(".include \"../../lang/python/application.mk\"\n");
     }
     if ( use_python_distutils )
-	printf(".include \"../../lang/python/extension.mk\"\n");
+	printf(".include \"../../lang/python/egg.mk\"\n");
     if ( buildlink != "" )
     {
 	gsub("^ ", "", buildlink);   # Remove leading space from first add
