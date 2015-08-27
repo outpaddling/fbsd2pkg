@@ -383,7 +383,10 @@ END {
 	printf(".include \"../../lang/python/application.mk\"\n");
     }
     if ( use_python_distutils )
-	printf(".include \"../../lang/python/egg.mk\"\n");
+    {
+	printf("# Verify that we shouldn't use egg.mk or extensions.mk instead.\n");
+	printf(".include \"../../lang/python/distutils.mk\"\n");
+    }
     if ( buildlink != "" )
     {
 	gsub("^ ", "", buildlink);   # Remove leading space from first add
