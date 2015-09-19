@@ -82,7 +82,8 @@ if [ $new_pkg = 1 ]; then
     #   Copy over basic file structure
     ##########################################################################
     
-    cp $port_path/pkg-descr DESCR
+    # Remove WWW line, which goes in Makefile, and any blank lines
+    grep -v 'WWW:' $port_path/pkg-descr | grep -v '^$' > DESCR
     chmod 644 DESCR
     if [ -e $port_path/files ]; then
 	cp -R $port_path/files .
@@ -114,7 +115,9 @@ if [ $new_pkg = 1 ]; then
     ##########################################################################
     
     printf "Converting Makefile...\n"
-    awk -v maintainer=$maintainer -f fbsd2pkg.awk \
+    homepage=`awk '$1 == "WWW:" { print $2 }' $port_path/pkg-descr`
+    awk -v maintainer=$maintainer -v homepage=$homepage \
+	-f /home/bacon/Pkgsrc/pkg-2/libexec/fbsd2pkg/fbsd2pkg.awk \
 	$port_path/Makefile > Makefile
     pause
     printf "Generating buildlink3.mk...\n"
@@ -140,7 +143,7 @@ $make makesum
 $make makepatchsum
 $make patch
 $make
-$make install
+$make install || true   # Will fail if PKG_DEVELOPER=yes and PLIST is empty
 if [ `uname` != Darwin ]; then
     $make print-PLIST > PLIST
     $EDITOR PLIST
