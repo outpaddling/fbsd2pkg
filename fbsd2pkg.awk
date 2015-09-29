@@ -128,9 +128,9 @@ BEGIN {
 		# Ignore this and just convert USE_PERL
 	    }
 	    else if ( $f == "pkgconfig" )
-		use_tools = use_tools "pkg-config";
+		use_tools = use_tools " pkg-config";
 	    else if ( $f == "gmake" )
-		use_tools = use_tools "gmake";
+		use_tools = use_tools " gmake";
 	    else if ( $f == "libtool" )
 		use_libtool = "yes";
 	    else if ( $f == "shebangfix" )
@@ -176,6 +176,22 @@ BEGIN {
     {
 	gsub("STAGEDIR", "DESTDIR", $0);
 	install_target = $0;
+    }
+    else if ( $1 ~ "^USE_GITHUB" )
+	use_github = 1;
+    else if ( $1 ~ "^GH_ACCOUNT") 
+	gh_account = $2;
+    else if ( $1 ~ "^GH_PROJECT")
+	gh_project = $2;
+    else if ( $1 ~ "^USE_AUTOTOOLS" )
+    {
+	for (f = 2; f <= NF; ++f)
+	{
+	    use_tools = use_tools " " $f;
+	    auto_tools = auto_tools " && " $f;
+	    # printf("%s\n", $f);
+	}
+	# printf("auto_tools = %s\n", auto_tools);
     }
     else if ( $1 ~ "^USE_PYTHON" )
     {
@@ -254,6 +270,19 @@ END {
     }
     else if ( master_site_subdir != "" )
 	printf("# FreeBSD MASTER_SITE_SUBDIR: %s\n", master_site_subdir);
+    
+    if ( use_github )
+    {
+	master_sites="${MASTER_SITE_GITHUB:=";
+	if ( gh_account != "" )
+	    master_sites = master_sites gh_account "/";
+	else
+	    master_sites = master_sites pkgname;
+	if ( gh_project != "" )
+	    master_sites = master_sites gh_project "/";
+	master_sites = master_sites "}";
+    }
+    
     printf("MASTER_SITES=\t%s\n", master_sites);
     
     if ( extract_sufx != "" )
@@ -371,6 +400,9 @@ END {
 	printf("CHEESESHOP=\thttp://pypi.python.org/packages/source/%c/%s/\n",
 		substr(distname_stem,1,1),distname_stem);
     }
+    
+    if ( auto_tools != "" )
+	printf("\npre-configure:\n\tcd ${WRKSRC}%s\n", auto_tools);
     
     printf("\n# Sets OPSYS, OS_VERSION, MACHINE_ARCH, etc..\n");
     printf("# .include \"../../mk/bsd.prefs.mk\"\n");
