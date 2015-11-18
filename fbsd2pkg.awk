@@ -277,7 +277,7 @@ END {
 	if ( gh_account != "" )
 	    master_sites = master_sites gh_account "/";
 	else
-	    master_sites = master_sites pkgname;
+	    master_sites = master_sites pkgname "/";
 	if ( gh_project != "" )
 	    master_sites = master_sites gh_project "/";
 	master_sites = master_sites "}";
