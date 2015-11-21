@@ -48,7 +48,7 @@ BEGIN {
     else if ( $1 ~ "^MASTER_SITES" )
     {
 	master_sites = $2;
-	if ( master_sites ~ "github" )
+	if ( (master_sites ~ "github") || (master_sites ~ "GITHUB") )
 	    use_curl = 1;
 	else if ( master_sites ~ "^SF" )
 	    sf_master_sites = master_sites;
@@ -183,6 +183,8 @@ BEGIN {
 	gh_account = $2;
     else if ( $1 ~ "^GH_PROJECT")
 	gh_project = $2;
+    else if ( $1 ~ "^GH_TAGNAME")
+	gh_tagname = $2;
     else if ( $1 ~ "^USE_AUTOTOOLS" )
     {
 	for (f = 2; f <= NF; ++f)
@@ -278,12 +280,17 @@ END {
 	    master_sites = master_sites gh_account "/";
 	else
 	    master_sites = master_sites pkgname "/";
-	if ( gh_project != "" )
-	    master_sites = master_sites gh_project "/";
 	master_sites = master_sites "}";
     }
     
     printf("MASTER_SITES=\t%s\n", master_sites);
+
+    if ( gh_project != "" )
+	printf("GITHUB_PROJECT=\t%s\n", gh_project);
+    if ( gh_tagname != "" )
+	printf("GITHUB_TAG=\t%s\n", gh_tag);
+    else
+	printf("GITHUB_TAG=\t${PORTVERSION}\n");
     
     if ( extract_sufx != "" )
 	printf("EXTRACT_SUFX=\t%s\n", extract_sufx);
