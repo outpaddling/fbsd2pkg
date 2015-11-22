@@ -53,7 +53,7 @@ BEGIN {
 	else if ( master_sites ~ "^SF" )
 	    sf_master_sites = master_sites;
 	else if ( master_sites == "CHEESESHOP" )
-	    master_sites = "\${CHEESESHOP}";
+	    master_sites = "\\${CHEESESHOP}";
 	else
 	    gsub("\\${PORTNAME}", portname, master_sites);
     }
@@ -211,7 +211,7 @@ BEGIN {
     else if ( $1 ~ "^PKGNAMEPREFIX" )
     {
 	pkgnameprefix=$2;
-	gsub("\\${PYTHON_PKGNAMEPREFIX}", "\${PYPKGPREFIX}-", pkgnameprefix);
+	gsub("\\${PYTHON_PKGNAMEPREFIX}", "\\${PYPKGPREFIX}-", pkgnameprefix);
     }
     else if ( $1 ~ "^PKGNAMESUFFIX" )
 	pkgnamesuffix=$2;
@@ -219,7 +219,7 @@ BEGIN {
     {
 	# Convert what we can in FreeBSD ports code that's left commented out
 	gsub("STAGEDIR", "DESTDIR", $0);
-	gsub("\\${PYTHON_PKGNAMEPREFIX}", "\${PYPKGPREFIX}-", $0);
+	gsub("\\${PYTHON_PKGNAMEPREFIX}", "\\${PYPKGPREFIX}-", $0);
 	gsub("\\${PORTSDIR}", "../..", $0);
 	
 	if ( ($0 ~ "COPYTREE") && (use_tools !~ "pax") )
@@ -288,7 +288,7 @@ END {
     if ( gh_project != "" )
 	printf("GITHUB_PROJECT=\t%s\n", gh_project);
     if ( gh_tagname != "" )
-	printf("GITHUB_TAG=\t%s\n", gh_tag);
+	printf("GITHUB_TAG=\t%s\n", gh_tagname);
     else
 	printf("GITHUB_TAG=\t${PORTVERSION}\n");
     
