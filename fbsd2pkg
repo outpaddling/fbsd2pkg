@@ -41,8 +41,10 @@ if [ $# != 2 ]; then
 fi
 
 if ! which bmake; then
-    printf "Error: bmake not found in PATH.\n"
-    exit 1
+    printf "Warning: bmake not found in PATH.  Trying "make"...\n"
+    make=make
+else
+    make=bmake
 fi
 
 port_path=$1
@@ -51,12 +53,6 @@ maintainer=$2
 if [ ! -e $port_path ]; then
     printf "$port_path does not exist.\n"
     exit 1
-fi
-
-if [ `uname` = NetBSD ]; then
-    make=make
-else
-    make=bmake
 fi
 
 port_name=`basename $1`
