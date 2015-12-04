@@ -69,7 +69,7 @@ BEGIN {
 	known_license = 0;
 	if ( license ~ "^LGPL" )
 	{
-	    gsub("LGPL", "gnu-lgpl-", license);
+	    gsub("LGPL", "gnu-lgpl-v", license);
 	    known_license = 1;
 	}
 	else if ( license ~ "^GPL" )
