@@ -69,7 +69,7 @@ BEGIN {
 	known_license = 0;
 	if ( license ~ "^LGPL" )
 	{
-	    gsub("LGPL", "gnu-lgpl-v", license);
+	    gsub("LGPL", "gnu-lgpl-", license);
 	    known_license = 1;
 	}
 	else if ( license ~ "^GPL" )
@@ -178,7 +178,10 @@ BEGIN {
 	install_target = $0;
     }
     else if ( $1 ~ "^USE_GITHUB" )
+    {
 	use_github = 1;
+	use_curl = 1;
+    }
     else if ( $1 ~ "^GH_ACCOUNT") 
 	gh_account = $2;
     else if ( $1 ~ "^GH_PROJECT")
@@ -307,8 +310,8 @@ END {
     else
 	printf("# LICENSE=\t%s\n", license);
 
-    printf("\n# Pessimistic assumption.  Test and change if possible.\n");
-    printf("MAKE_JOBS_SAFE=\tno\n");
+    printf("\n# Test and change if necessary.\n");
+    printf("# MAKE_JOBS_SAFE=\tno\n");
     
     if ( only_for_platform != "" )
 	printf("\nONLY_FOR_PLATFORM=\t%s\n", only_for_platform);
@@ -448,6 +451,8 @@ END {
 	printf("# Convert any _DEPENDS above that have a buildlink3.mk\n");
 	printf("# .include \"../..///buildlink3.mk\"\n");
     }
+    printf("# Linux doesn't have zlib in the base, so just in case...\n");
+    printf("# .include \"../../devel/zlib/buildlink3.mk\"\n");
     printf(".include \"../../mk/bsd.pkg.mk\"\n");
 }
 
