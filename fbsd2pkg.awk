@@ -69,7 +69,7 @@ BEGIN {
 	known_license = 0;
 	if ( license ~ "^LGPL" )
 	{
-	    gsub("GPL", "gnu-lgpl-", license);
+	    gsub("LGPL", "gnu-lgpl-", license);
 	    known_license = 1;
 	}
 	else if ( license ~ "^GPL" )
@@ -285,12 +285,15 @@ END {
     
     printf("MASTER_SITES=\t%s\n", master_sites);
 
-    if ( gh_project != "" )
-	printf("GITHUB_PROJECT=\t%s\n", gh_project);
-    if ( gh_tagname != "" )
-	printf("GITHUB_TAG=\t%s\n", gh_tagname);
-    else
-	printf("GITHUB_TAG=\t${PORTVERSION}\n");
+    if ( use_github )
+    {
+	if ( gh_project != "" )
+	    printf("GITHUB_PROJECT=\t%s\n", gh_project);
+	if ( gh_tagname != "" )
+	    printf("GITHUB_TAG=\t%s\n", gh_tagname);
+	else
+	    printf("GITHUB_TAG=\t${PORTVERSION}\n");
+    }
     
     if ( extract_sufx != "" )
 	printf("EXTRACT_SUFX=\t%s\n", extract_sufx);
