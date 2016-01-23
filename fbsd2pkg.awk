@@ -10,6 +10,7 @@ BEGIN {
 
     printf("###########################################################\n");
     printf("# Unconverted and partially converted FreeBSD port syntax:\n\n");
+    subst_file=1;
 }
 
 {
@@ -92,6 +93,16 @@ BEGIN {
 	    license = "mit";
 	    known_license = 1;
 	}
+	else if ( license == "ART10" )
+	{
+	    license = "artistic";
+	    known_license = 1;
+	}
+	else if ( license == "ART20" )
+	{
+	    license = "artistic-2.0";
+	    known_license = 1;
+	}
     }
     else if ( $1 ~ "^GNU_CONFIGURE" )
 	gnu_configure = 1;
@@ -109,6 +120,10 @@ BEGIN {
 	ldlags = $0;
     else if ( $1 ~ "^MAKEFILE" )
 	make_file = $2;
+    else if ( $1 ~ "^MAKE_ARGS" )
+	make_flags = $2;
+    else if ( $1 ~ "^MAKE_ENV" )
+	make_env = $2;
     else if ( $1 ~ "^USES" )
     {
 	for (f = 2; f <= NF; ++f)
@@ -134,12 +149,20 @@ BEGIN {
 	    else if ( $f == "libtool" )
 		use_libtool = "yes";
 	    else if ( $f == "shebangfix" )
-	    {
 		shebang_fix = 1;
-	    }
 	    else if ( $f == "ncurses" )
-	    {
 		buildlink = buildlink "devel/ncurses";
+	    else if ( $f == "compiler:openmp" )
+	    {
+		if ( cflags == "" )
+		    cflags="CFLAGS=\t\t";
+		cflags = cflags "-fopenmp ";
+		if ( cxxflags == "" )
+		    cxxflags="CXXFLAGS=\t";
+		cxxflags = cxxflags "-fopenmp ";
+		if ( fflags == "" )
+		    fflags="FFLAGS=\t\t";
+		fflags = fflags "-fopenmp ";
 	    }
 	    else
 		printf("# Unknown tool: USE_TOOLS=\t%s\n", $f);
@@ -220,18 +243,89 @@ BEGIN {
 	pkgnamesuffix=$2;
     else if ( $0 != "" )
     {
-	# Convert what we can in FreeBSD ports code that's left commented out
-	gsub("STAGEDIR", "DESTDIR", $0);
-	gsub("\\${PYTHON_PKGNAMEPREFIX}", "${PYPKGPREFIX}-", $0);
-	gsub("\\${PORTSDIR}", "../..", $0);
-	
-	if ( ($0 ~ "COPYTREE") && (use_tools !~ "pax") )
-	    use_tools = use_tools " pax";
-	gsub("\\${COPYTREE_.+}", "pax -rw", $0);
-	
-	printf("# %s\n", $0);
-	if ( $0 ~ "REINPLACE_CMD" )
-	    use_subst = 1;
+	if ( $1 ~ "REINPLACE_CMD" )
+	{
+	    printf("\n# Replace %s with a meaningful name.\n", subst_file) > subst_file;
+	    printf("# Assuming post-patch.  Adjust if necessary.\n") >> subst_file;
+	    printf("#SUBST_CLASSES+=\t%s\n", subst_file) >> subst_file;
+	    printf("#SUBST_STAGE.%s=\t\tpost-patch\n", subst_file) >> subst_file;
+	    first_field = 2;
+	    more_lines = 1;
+	    while ( more_lines )
+	    {
+		printf("# %s\n", $0);
+		if ( substr($0, length($0), 1) == "\\" )
+		    --NF;
+		else
+		    more_lines = 0;
+		for (field = first_field; field <= NF; ++field)
+		{
+		    if ( ($field == "-e") || ($field == "-E") || ($field == "-i") )
+		    {
+			# Print flag
+			printf("#SUBST_SED.%s+=\t\t%s ", subst_file, $field) >> subst_file;
+			++field;
+			
+			# Print string after flag.  If it's a quoted
+			# string, it may contain spaces, so we have to
+			# process character by character rather than just
+			# use the next field.
+			first_ch = substr($field, 1, 1);
+			arg_str = first_ch;
+			if ( ( first_ch == "'" ) || ( first_ch == "\"" ) )
+			{
+			    # Position of 2nd character in $field within line
+			    i = index($0, $field) + 1;
+			    do
+			    {
+				ch = substr($0, i, 1);
+				# Handle escaped chars
+				if ( ch == "\\" )
+				    ++i;
+				if ( (ch == " ") || (ch == "\t" ) )
+				{
+				    ++field;
+				    do
+				    {
+					arg_str = arg_str ch;
+					++i;
+					ch = substr($0, i, 1);
+				    }   while ( (ch == " ") || (ch == "\t" ) );
+				}
+				ch = substr($0, i, 1);
+				arg_str = arg_str ch;
+				++i;
+			    }   while ( ch != first_ch );
+			    printf("%s\n", arg_str) >> subst_file;
+			}
+			else
+			    printf("%s\n", $field) >> subst_file;
+		    }
+		    else
+			printf("#SUBST_FILES.%s+=\t%s\n", subst_file, $field) >> subst_file;
+		}
+		if ( more_lines )
+		{
+		    getline;
+		    first_field = 1;
+		}
+	    }
+	    system("cat " subst_file " && rm -f " subst_file);
+	    printf("\n");
+	    ++subst_file;
+	}
+	else
+	{
+	    # Convert what we can in FreeBSD ports code that's left commented out
+	    gsub("STAGEDIR", "DESTDIR", $0);
+	    gsub("\\${PYTHON_PKGNAMEPREFIX}", "${PYPKGPREFIX}-", $0);
+	    gsub("\\${PORTSDIR}", "../..", $0);
+	    
+	    if ( ($0 ~ "COPYTREE") && (use_tools !~ "pax") )
+		use_tools = use_tools " pax";
+	    gsub("\\${COPYTREE_.+}", "pax -rw", $0);
+	    printf("#%s\n", $0);
+	}
     }
 }
 
@@ -348,16 +442,6 @@ END {
     if ( wrksrc != "" )
 	printf("\n%s\n", wrksrc);
     
-    if ( use_subst )
-    {
-	printf("\n# Adapt REINPLACE commands to SUBST:\n");
-	printf("SUBST_CLASSES+=\t\t\n");
-	printf("SUBST_STAGE.=\tpost-patch\n");
-	printf("SUBST_MESSAGE.=\t\n");
-	printf("SUBST_FILES.=\t\n");
-	printf("SUBST_SED.=\t\n");
-    }
-
     if ( configure_env != "" )
     {
 	printf("\n");
@@ -391,6 +475,12 @@ END {
 
     if ( make_file != "" )
 	printf("MAKE_FILE=\t%s\n", make_file);
+    
+    if ( make_flags != "" )
+	printf("# Double check this\nMAKE_FLAGS=\t%s\n", make_flags);
+    
+    if ( make_env != "" )
+	printf("# Double check this\nMAKE_ENV=\t%s\n", make_env);
 
     if ( build_target != "" )
 	printf("BUILD_TARGET=\t%s\n", build_target);
@@ -425,7 +515,8 @@ END {
     printf("# .include \"options.mk\"\n");
     
     printf("\n# Specify which directories to create before install.\n");
-    printf("# INSTALLATION_DIRS=\tbin lib ${PKGMANDIR}/man1 share/doc share/examples\n");
+    printf("# You should only need this if using your own install target.\n");
+    printf("INSTALLATION_DIRS=\tbin lib ${PKGMANDIR}/man1 share/doc share/examples\n");
     
     printf("\n");
     if ( use_python_run )
