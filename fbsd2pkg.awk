@@ -48,6 +48,18 @@ function skip_whitespace()
 }
 
 
+function get_continued_line()
+{
+    check_continuation();
+    while ( more_lines )
+    {
+	getline;
+	continued_line = continued_line " \\\n\t\t" $1;
+	check_continuation();
+    }
+    gsub("LOCALBASE", "PREFIX", continued_line);
+}
+
 # TODO:
 #   Process PKGNAMEPREFIX and PKGNAMESUFFIX
 
@@ -65,6 +77,7 @@ BEGIN {
 }
 
 {
+    gsub("LOCALBASE", "PREFIX");
     if ( $1 ~ "^PORTNAME" )
     {
 	# Start here and override if distname, pkgname prefix, etc. specified
@@ -89,6 +102,10 @@ BEGIN {
     {
 	distversionsuffix = $2;
     }
+    else if ( $1 ~ "^DISTVERSIONPREFIX" )
+    {
+	distversionprefix = $2;
+    }
     else if ( $1 ~ "^DISTFILES" )
     {
 	distfiles = $2;
@@ -104,22 +121,15 @@ BEGIN {
     else if ( $1 ~ "^MASTER_SITES" )
     {
 	master_sites = $2;
-	if ( (master_sites ~ "github") || (master_sites ~ "GITHUB") )
-	    use_curl = 1;
-	else if ( master_sites ~ "^SF" )
+	if ( master_sites ~ "^SF" )
 	    sf_master_sites = master_sites;
 	else if ( master_sites == "CHEESESHOP" )
-	    master_sites = "\\${CHEESESHOP}";
+	    master_sites = "\\${MASTER_SITE_PYPI:=" substr(portname,1,1) "/" portname "/}";
 	else
 	    gsub("\\${PORTNAME}", portname, master_sites);
 	
-	check_continuation();
-	while ( more_lines )
-	{
-	    getline;
-	    master_sites = master_sites " \\\n\t\t" $1;
-	    check_continuation();
-	}
+	get_continued_line()
+	master_sites = master_sites continued_line;
     }
     else if ( $1 ~ "^MAINTAINER" )
     {
@@ -127,7 +137,7 @@ BEGIN {
     }
     else if ( $1 ~ "^COMMENT" )
 	comment = $0;
-    else if ( $1 ~ "^LICENSE" )
+    else if ( $1 ~ "^LICENSE=" )
     {
 	license = $2;
 	known_license = 0;
@@ -166,6 +176,11 @@ BEGIN {
 	    license = "artistic-2.0";
 	    known_license = 1;
 	}
+	else if ( license == "APACHE20" )
+	{
+	    license = "apache-2.0";
+	    known_license = 1;
+	}
     }
     else if ( $1 ~ "^GNU_CONFIGURE" )
 	gnu_configure = 1;
@@ -184,11 +199,17 @@ BEGIN {
     else if ( $1 ~ "^MAKEFILE" )
 	make_file = $2;
     else if ( $1 ~ "^MAKE_ARGS" )
-	make_flags = $2;
+	make_flags = make_flags $2;
     else if ( $1 ~ "^MAKE_ENV" )
 	make_env = $2;
     else if ( $1 ~ "^CMAKE_ARGS" )
+    {
 	cmake_args = $2;
+	get_continued_line();
+	cmake_args = cmake_args continued_line;
+    }
+    else if ( ($1 ~ "^CMAKE_VERBOSE") && ($2 == "yes") )
+	make_flags = make_flags "VERBOSE=1"
     else if ( $1 ~ "^USES" )
     {
 	for (f = 2; f <= NF; ++f)
@@ -215,6 +236,8 @@ BEGIN {
 		use_libtool = "yes";
 	    else if ( $f == "pkgconfig" )
 		use_tools = use_tools " pkg-config";
+	    else if ( $f == "ssl" )
+		use_ssl=1
 	    else if ( $f == "shebangfix" )
 		shebang_fix = 1;
 	    else if ( $f == "dos2unix" )
@@ -263,6 +286,7 @@ BEGIN {
 	    ++d2f_count;
 	    dos2unix_files[d2f_count] = $c;
 	}
+	# FIXME: Replace with get_continued_line()?
 	while ( more_lines )
 	{
 	    getline;
@@ -439,7 +463,7 @@ BEGIN {
 		use_tools = use_tools " pax";
 	    # Unfortunately, pkgsrc pax does not support -c to exclude .orig
 	    # files
-	    gsub("\\${COPYTREE_.+}", "pax -rw", $0);
+	    gsub("\\${COPYTREE_[A-Z]+}", "pax -rw", $0);
 	    printf("#%s\n", $0);
 	}
     }
@@ -503,10 +527,11 @@ END {
 	if ( gh_project == "" )
 	    gh_project=portname;
 	printf("GITHUB_PROJECT=\t%s\n", gh_project);
-	if ( gh_tagname != "" )
-	    printf("GITHUB_TAG=\t%s\n", gh_tagname);
-	else
-	    printf("GITHUB_TAG=\t${PORTVERSION}\n");
+	if ( gh_tagname == "" )
+	    gh_tagname="${PORTVERSION}";
+	if ( distversionprefix != "" )
+	    gh_tagname = distversionprefix gh_tagname;
+	printf("GITHUB_TAG=\t%s\n", gh_tagname);
     }
     
     if ( extract_sufx != "" )
@@ -564,7 +589,7 @@ END {
     if ( use_cmake )
 	printf("USE_CMAKE=\tyes\n");
     if ( cmake_args != "" )
-	printf("# Check this\nCMAKE_ARGS=\t%s\n", cmake_args);
+	printf("# Check this\nCMAKE_ARGS+=\t%s\n", cmake_args);
 
     if ( no_build == 1 )
 	printf("NO_BUILD=\tyes\n");
@@ -607,10 +632,10 @@ END {
 	printf("MAKE_FILE=\t%s\n", make_file);
     
     if ( make_flags != "" )
-	printf("# Check this\nMAKE_FLAGS=\t%s\n", make_flags);
+	printf("# Check this\nMAKE_FLAGS+=\t%s\n", make_flags);
     
     if ( make_env != "" )
-	printf("# Check this\nMAKE_ENV=\t%s\n", make_env);
+	printf("# Check this\nMAKE_ENV+=\t%s\n", make_env);
 
     if ( build_target != "" )
 	printf("BUILD_TARGET=\t%s\n", build_target);
@@ -618,9 +643,6 @@ END {
     if ( install_target != "" )
 	printf("%s\n", install_target);
     
-    if ( use_curl )
-	printf("\nFETCH_USING=\tcurl\n");
-
     printf("\nPORTVERSION=\t%s\n", portversion);
     if ( use_perl )
 	printf("SITE_PERL=\t${PREFIX}/share\n");
@@ -646,7 +668,7 @@ END {
     
     printf("\n# Specify which directories to create before install.\n");
     printf("# You should only need this if using your own install target.\n");
-    printf("INSTALLATION_DIRS=\tbin lib ${PKGMANDIR}/man1 share/doc share/examples\n");
+    printf("INSTALLATION_DIRS=\tbin include lib ${PKGMANDIR}/man1 share/doc share/examples\n");
     
     if ( dos2unix )
     {
@@ -689,6 +711,11 @@ END {
 	printf("# Based on USES=python.  Check this.\n");
 	printf(".include \"../../lang/python/application.mk\"\n");
     }
+    if ( use_ssl )
+    {
+	printf(".include \"../../security/openssl/buildlink3.mk\"\n");
+    }
+    
     printf("# Linux doesn't have zlib in the base, so just in case...\n");
     printf("# .include \"../../devel/zlib/buildlink3.mk\"\n");
     printf(".include \"../../mk/bsd.pkg.mk\"\n");

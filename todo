@@ -1,1 +1,4 @@
 
+Support quotes strings with spaces in var assignments
+	LIBS="-L${LOCALBASE}/lib -llib"
+

@@ -57,6 +57,22 @@ fi
 
 port_name=`basename $1`
 
+cat << EOM
+
+To avoid duplicating effort across the FreeBSD port and pkgsrc package,
+make sure $port_path has been cleaned up as much as possible:
+
+1)  Does it pass portlint -A?
+2)  Does it pass stage QA? (Build with DEVELOPER=yes in /etc/make.conf)
+3)  Have you carefully inspected Makefile and pkg-descr?
+
+EOM
+printf "Continue?  y/[n] "
+read continue
+if [ 0$continue != 0y ]; then
+    exit
+fi
+
 if [ -d $port_name ]; then
     printf "$port_name already exists.  Overwrite? (y/[n]) "
     read overwrite
