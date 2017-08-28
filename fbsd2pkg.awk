@@ -74,6 +74,7 @@ BEGIN {
     printf("###########################################################\n");
     printf("# Unconverted and partially converted FreeBSD port syntax:\n\n");
     subst_file=1;
+    use_languages="c c++";
 }
 
 {
@@ -199,7 +200,10 @@ BEGIN {
     else if ( $1 ~ "^MAKEFILE" )
 	make_file = $2;
     else if ( $1 ~ "^MAKE_ARGS" )
-	make_flags = make_flags $2;
+    {
+	make_flags = $0;
+	gsub("MAKE_ARGS", "MAKE_FLAGS", make_flags);
+    }
     else if ( $1 ~ "^MAKE_ENV" )
 	make_env = $2;
     else if ( $1 ~ "^CMAKE_ARGS" )
@@ -230,6 +234,8 @@ BEGIN {
 		use_python=1
 	    else if ( $f == "bison" )
 		use_tools = use_tools " bison";
+	    else if ( $f == "fortran" )
+		use_languages = use_languages " fortran";
 	    else if ( $f == "gmake" )
 		use_tools = use_tools " gmake";
 	    else if ( $f == "libtool" )
@@ -561,7 +567,7 @@ END {
     if ( only_for_platform != "" )
 	printf("\nONLY_FOR_PLATFORM=\t%s\n", only_for_platform);
     
-    printf("\n# Just assuming C and C++: Adjust this!\nUSE_LANGUAGES=\tc c++\n");
+    printf("\n# Just assuming C and C++: Adjust this!\nUSE_LANGUAGES=\t%s\n", use_languages);
     if ( use_tools != "" )
     {
 	gsub("^ ", "", use_tools);   # Remove leading space from first add       
@@ -632,7 +638,7 @@ END {
 	printf("MAKE_FILE=\t%s\n", make_file);
     
     if ( make_flags != "" )
-	printf("# Check this\nMAKE_FLAGS+=\t%s\n", make_flags);
+	printf("# Check this\n%s\n", make_flags);
     
     if ( make_env != "" )
 	printf("# Check this\nMAKE_ENV+=\t%s\n", make_env);
