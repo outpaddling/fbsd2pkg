@@ -324,6 +324,7 @@ BEGIN {
 	wrksrc = $0;
 	gsub("\\${PORTNAME}", portname, wrksrc);
 	gsub("\\${GH_TAGNAME}", "${GITHUB_TAG}", wrksrc);
+	gsub("\\${GH_PROJECT}", "${GITHUB_PROJECT}", wrksrc);
     }
     else if ( $1 ~ "^NO_BUILD" )
 	no_build = 1;
@@ -461,6 +462,7 @@ BEGIN {
 	{
 	    # Convert what we can in FreeBSD ports code that's left commented out
 	    gsub("STAGEDIR", "DESTDIR", $0);
+	    gsub("STRIP_CMD", "STRIP", $0);
 	    gsub("post-stage", "post-install", $0);
 	    gsub("\\${PYTHON_PKGNAMEPREFIX}", "${PYPKGPREFIX}-", $0);
 	    gsub("\\${PORTSDIR}", "../..", $0);
