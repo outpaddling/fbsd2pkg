@@ -79,6 +79,7 @@ BEGIN {
 
 {
     gsub("LOCALBASE", "PREFIX");
+    gsub("MAKE_CMD", "MAKE_PROGRAM");
     if ( $1 ~ "^PORTNAME" )
     {
 	# Start here and override if distname, pkgname prefix, etc. specified
