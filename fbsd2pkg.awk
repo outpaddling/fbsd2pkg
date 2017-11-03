@@ -126,7 +126,13 @@ BEGIN {
 	if ( master_sites ~ "^SF" )
 	    sf_master_sites = master_sites;
 	else if ( master_sites == "CHEESESHOP" )
-	    master_sites = "\\${MASTER_SITE_PYPI:=" substr(portname,1,1) "/" portname "/}";
+	    master_sites = "${MASTER_SITE_PYPI:=" substr(portname,1,1) "/" portname "/}";
+	else if ( master_sites == "CPAN" )
+	{
+	    split(portname, a, "-");
+	    no_build=1;
+	    master_sites = "${MASTER_SITE_PERL_CPAN:=" a[1] "/}";
+	}
 	else
 	    gsub("\\${PORTNAME}", portname, master_sites);
 	

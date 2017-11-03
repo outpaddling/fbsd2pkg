@@ -62,9 +62,10 @@ cat << EOM
 To avoid duplicating effort across the FreeBSD port and pkgsrc package,
 make sure $port_path has been cleaned up as much as possible:
 
-1)  Does it pass portlint -A?
-2)  Does it pass stage QA? (Build with DEVELOPER=yes in /etc/make.conf)
-3)  Have you carefully inspected Makefile and pkg-descr?
+1)  Are you converting the latest available port?
+2)  Does it pass portlint -A?
+3)  Does it pass stage QA? (Build with DEVELOPER=yes in /etc/make.conf)
+4)  Have you carefully inspected Makefile and pkg-descr?
 
 EOM
 printf "Continue?  y/[n] "
