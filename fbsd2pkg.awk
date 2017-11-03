@@ -130,7 +130,8 @@ BEGIN {
 	else if ( master_sites == "CPAN" )
 	{
 	    split(portname, a, "-");
-	    no_build=1;
+	    perl_mod = 1;
+	    no_installation_dirs = 1;
 	    master_sites = "${MASTER_SITE_PERL_CPAN:=" a[1] "/}";
 	}
 	else
@@ -379,7 +380,10 @@ BEGIN {
 	}
     }
     else if ( $1 ~ "^USE_PERL" )
+    {
+	gsub("configure", "pkgsrc", $2);
 	use_tools = use_tools " perl:" $2;
+    }
     else if ( $1 ~ "^PKGNAMEPREFIX" )
     {
 	pkgnameprefix=$2;
@@ -681,9 +685,12 @@ END {
     printf("\n# Keep this if there are user-selectable options.\n");
     printf("# .include \"options.mk\"\n");
     
-    printf("\n# Specify which directories to create before install.\n");
-    printf("# You should only need this if using your own install target.\n");
-    printf("INSTALLATION_DIRS=\tbin include lib ${PKGMANDIR}/man1 share/doc share/examples\n");
+    if ( ! no_installation_dirs )
+    {
+	printf("\n# Specify which directories to create before install.\n");
+	printf("# You should only need this if using your own install target.\n");
+	printf("INSTALLATION_DIRS=\tbin include lib ${PKGMANDIR}/man1 share/doc share/examples\n");
+    }
     
     if ( dos2unix )
     {
@@ -706,6 +713,11 @@ END {
     {
 	printf("# Verify that we shouldn't use egg.mk or extensions.mk instead.\n");
 	printf(".include \"../../lang/python/distutils.mk\"\n");
+    }
+    if ( perl_mod )
+    {
+	printf("# Based on CPAN MASTER_SITES.\n");
+	printf(".include \"../../lang/perl5/module.mk\"\n");
     }
     if ( buildlink != "" )
     {
