@@ -89,6 +89,8 @@ BEGIN {
     }
     else if ( $1 ~ "^PORTVERSION" )
 	portversion = $2;
+    else if ( $1 ~ "^DISTVERSION" )
+	portversion = $2;
     else if ( $1 ~ "^DISTNAME" )
     {
 	explicit_distname = $2;
