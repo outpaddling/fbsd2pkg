@@ -162,6 +162,11 @@ BEGIN {
 	    gsub("GPL", "gnu-gpl-", license);
 	    known_license = 1;
 	}
+	if ( license == "PD" )
+	{
+	    license = "public-domain";
+	    known_license = 1;
+	}
 	else if ( license == "BSD3CLAUSE" )
 	{
 	    license = "modified-bsd";
