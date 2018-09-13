@@ -89,6 +89,15 @@ BEGIN {
     }
     else if ( $1 ~ "^PORTVERSION" )
 	portversion = $2;
+    else if ( $1 ~ "^DISTVERSIONSUFFIX" )
+    {
+	distversionsuffix = $2;
+    }
+    else if ( $1 ~ "^DISTVERSIONPREFIX" )
+    {
+	distversionprefix = $2;
+    }
+    # After DISTVERSION*, or it will override all of them
     else if ( $1 ~ "^DISTVERSION" )
 	portversion = $2;
     else if ( $1 ~ "^DISTNAME" )
@@ -102,14 +111,6 @@ BEGIN {
 	dist_subdir = $2;
 	gsub("\\${PORTNAME}", portname, dist_subdir);
     }
-    else if ( $1 ~ "^DISTVERSIONSUFFIX" )
-    {
-	distversionsuffix = $2;
-    }
-    else if ( $1 ~ "^DISTVERSIONPREFIX" )
-    {
-	distversionprefix = $2;
-    }
     else if ( $1 ~ "^DISTFILES" )
     {
 	distfiles = $2;
@@ -118,7 +119,12 @@ BEGIN {
     else if ( $1 ~ "^EXTRACT_SUFX" )
 	extract_sufx = $2;
     else if ( $1 ~ "^CATEGORIES" )
-	categories = $2;
+    {
+	if ( $2 == "wip" )
+	    categories = $3;
+	else
+	    categories = $2;
+    }
     # Check this before MASTER_SITES!
     else if ( $1 ~ "^MASTER_SITE_SUBDIR" )
 	master_site_subdir = $2;
@@ -284,8 +290,8 @@ BEGIN {
 	    }
 	    else if ( $f ~ "cmake" )
 	    {
-		printf("# Note: %s\n", $f);
 		use_cmake = 1;
+		use_tools = use_tools " cmake";
 	    }
 	    else if ( $f == "metaport" )
 	    {
@@ -507,18 +513,18 @@ END {
     if ( explicit_distname != "" )
     {
 	printf("\nDISTNAME=\t%s\n", explicit_distname);
-	printf("PKGNAME=\t%s-${PORTVERSION}\n", pkgname);
+	printf("PKGNAME=\t%s-${PV}\n", pkgname);
     }
     else if ( ( distname != pkgname ) || (distversionsuffix != "") )
     {
-	printf("\nDISTNAME=\t%s-${PORTVERSION}%s\n", distname, distversionsuffix);
-	printf("PKGNAME=\t%s-${PORTVERSION}\n", pkgname);
+	printf("\nDISTNAME=\t%s-${PV}%s\n", distname, distversionsuffix);
+	printf("PKGNAME=\t%s-${PV}\n", pkgname);
     }
     else
-	printf("\nDISTNAME=\t%s-${PORTVERSION}\n", distname);
+	printf("\nDISTNAME=\t%s-${PV}\n", distname);
     if ( dist_subdir != "" )
     {
-	printf("\nPKGNAME=\t%s-${PORTVERSION}\n", pkgname);
+	printf("\nPKGNAME=\t%s-${PV}\n", pkgname);
 	printf("DIST_SUBDIR=\t%s\n", dist_subdir);
     }
     printf("CATEGORIES=\t%s\n", categories);
@@ -554,7 +560,7 @@ END {
 	    gh_project=portname;
 	printf("GITHUB_PROJECT=\t%s\n", gh_project);
 	if ( gh_tagname == "" )
-	    gh_tagname="${PORTVERSION}";
+	    gh_tagname="${PV}";
 	if ( distversionprefix != "" )
 	    gh_tagname = distversionprefix gh_tagname;
 	printf("GITHUB_TAG=\t%s\n", gh_tagname);
@@ -612,8 +618,10 @@ END {
 	printf("REPLACE_PERL=\t\n");
 	printf("REPLACE_PYTHON=\t\n");
     }
+
     if ( use_cmake )
 	printf("USE_CMAKE=\tyes\n");
+
     if ( cmake_args != "" )
 	printf("# Check this\nCMAKE_ARGS+=\t%s\n", cmake_args);
 
@@ -669,7 +677,7 @@ END {
     if ( install_target != "" )
 	printf("%s\n", install_target);
     
-    printf("\nPORTVERSION=\t%s\n", portversion);
+    printf("\nPV=\t\t%s\n", portversion);
     if ( use_perl )
 	printf("SITE_PERL=\t${PREFIX}/share\n");
     printf("DATADIR=\t${PREFIX}/share/%s\n", portname);
@@ -750,7 +758,7 @@ END {
 	printf(".include \"../../security/openssl/buildlink3.mk\"\n");
     }
     
-    printf("# Linux doesn't have zlib in the base, so just in case...\n");
+    printf("# CentOS doesn't have zlib in the base, so uncomment if needed.\n");
     printf("# .include \"../../devel/zlib/buildlink3.mk\"\n");
     printf(".include \"../../mk/bsd.pkg.mk\"\n");
 }
