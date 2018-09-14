@@ -80,6 +80,8 @@ BEGIN {
 {
     gsub("LOCALBASE", "PREFIX");
     gsub("MAKE_CMD", "MAKE_PROGRAM");
+    gsub("PORTVERSION", "PV");
+    gsub("FreeBSD", "\\${OPSYS}");
     if ( $1 ~ "^PORTNAME" )
     {
 	# Start here and override if distname, pkgname prefix, etc. specified
@@ -87,7 +89,7 @@ BEGIN {
 	pkgname = portname;
 	distname = portname;
     }
-    else if ( $1 ~ "^PORTVERSION" )
+    else if ( $1 ~ "^PV" )
 	portversion = $2;
     else if ( $1 ~ "^DISTVERSIONSUFFIX" )
     {
@@ -115,6 +117,15 @@ BEGIN {
     {
 	distfiles = $2;
 	gsub("\\${PORTNAME}", portname, distfiles);
+	get_continued_line();
+	distfiles = distfiles continued_line;
+    }
+    else if ( $1 ~ "^EXTRACT_ONLY" )
+    {
+	extract_only = $2;
+	gsub("\\${PORTNAME}", portname, extract_only);
+	get_continued_line();
+	extract_only = extract_only continued_line;
     }
     else if ( $1 ~ "^EXTRACT_SUFX" )
 	extract_sufx = $2;
@@ -130,7 +141,7 @@ BEGIN {
 	master_site_subdir = $2;
     else if ( $1 ~ "^MASTER_SITES" )
     {
-	master_sites = $2;
+	master_sites = master_sites $2;
 	if ( master_sites ~ "^SF" )
 	    sf_master_sites = master_sites;
 	else if ( master_sites == "CHEESESHOP" )
@@ -145,7 +156,7 @@ BEGIN {
 	else
 	    gsub("\\${PORTNAME}", portname, master_sites);
 	
-	get_continued_line()
+	get_continued_line();
 	master_sites = master_sites continued_line;
     }
     else if ( $1 ~ "^MAINTAINER" )
@@ -325,7 +336,7 @@ BEGIN {
 	    }
 	}
     }
-    else if ( $1 ~ "^ONLY_FOR_ARCHS" )
+    else if ( $1 ~ "^ONLY_FOR_ARCHS=" )
     {
 	for (f = 2; f <= NF; ++f)
 	{
@@ -553,6 +564,9 @@ END {
     printf("MASTER_SITES=\t%s\n", master_sites);
     if ( distfiles != "" )
 	printf("DISTFILES=\t%s\n", distfiles);
+
+    if ( extract_only != "" )
+	printf("EXTRACT_ONLY=\t%s\n", extract_only);
 
     if ( use_github )
     {
