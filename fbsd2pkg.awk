@@ -54,11 +54,24 @@ function get_continued_line()
     while ( more_lines )
     {
 	getline;
+	# FIXME: Assumes only one item per line
 	continued_line = continued_line " \\\n\t\t" $1;
 	check_continuation();
     }
     gsub("LOCALBASE", "PREFIX", continued_line);
 }
+
+
+function get_all_fields()
+{
+    all_fields = "";
+    for (c=2; c<NF; ++c)
+    {
+	all_fields = all_fields $c " ";
+    }
+    all_fields = all_fields $NF;    # No trailing space
+}
+
 
 # TODO:
 #   Process PKGNAMEPREFIX and PKGNAMESUFFIX
@@ -233,11 +246,20 @@ BEGIN {
 	make_file = $2;
     else if ( $1 ~ "^MAKE_ARGS" )
     {
-	make_flags = $0;
+	get_all_fields();
+	make_flags = "MAKE_FLAGS+=\t" all_fields;
+	get_continued_line();
+	make_flags = make_flags continued_line;
 	gsub("MAKE_ARGS", "MAKE_FLAGS", make_flags);
     }
     else if ( $1 ~ "^MAKE_ENV" )
-	make_env = $2;
+    {
+	get_all_fields();
+	make_env = "MAKE_ENV+=\t" all_fields;
+	get_continued_line();
+	make_env = make_env continued_line;
+	gsub("MAKE_ENV=", "MAKE_ENV+=", make_env);
+    }
     else if ( $1 ~ "^CMAKE_ARGS" )
     {
 	cmake_args = $2;
@@ -262,7 +284,10 @@ BEGIN {
 		extract_sufx=".zip";
 	    else if ( $f == "perl5" )
 		use_perl=1
-	    else if ( $f == "python" )
+	    else if ( $f == "python:run" )
+		use_python_run=1
+	    else if ( ( $f == "python" ) || ( $f ~ "python:" ) )
+		# Plain python or python:version
 		use_python=1
 	    else if ( $f == "bison" )
 		use_tools = use_tools " bison";
@@ -397,9 +422,7 @@ BEGIN {
 	n = split($0, uses, "[ \t]");
 	for (c = 2; c <= n; ++c)
 	{
-	    if ( uses[c] == "run" )
-		use_python_run=1;
-	    else if ( uses[c] == "distutils" )
+	    if ( uses[c] == "distutils" )
 		use_python_distutils=1;
 	}
     }
@@ -683,7 +706,7 @@ END {
 	printf("# Check this\n%s\n", make_flags);
     
     if ( make_env != "" )
-	printf("# Check this\nMAKE_ENV+=\t%s\n", make_env);
+	printf("# Check this\n%s\n", make_env);
 
     if ( build_target != "" )
 	printf("BUILD_TARGET=\t%s\n", build_target);
