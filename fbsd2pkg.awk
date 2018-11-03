@@ -207,6 +207,11 @@ BEGIN {
 	    license = "2-clause-bsd";
 	    known_license = 1;
 	}
+	else if ( license == "BSL" )
+	{
+	    license = "boost-license";
+	    known_license = 1;
+	}
 	else if ( license == "MIT" )
 	{
 	    license = "mit";
@@ -443,9 +448,9 @@ BEGIN {
 	if ( $1 ~ "REINPLACE_CMD" )
 	{
 	    printf("\n# Best guess translation of REINPLACE above.  Replace %s with a\n", subst_file) > subst_file;
-	    printf("# meaningful name.  Assuming post-patch: Change if necessary.\n") >> subst_file;
+	    printf("# meaningful name.  Assuming pre-configure: Change if necessary.\n") >> subst_file;
 	    printf("#SUBST_CLASSES+=\t\t%s\n", subst_file) >> subst_file;
-	    printf("#SUBST_STAGE.%s=\tpost-patch\n", subst_file) >> subst_file;
+	    printf("#SUBST_STAGE.%s=\tpre-configure\n", subst_file) >> subst_file;
 	    first_field = 2;
 	    more_lines = 1;
 	    while ( more_lines )
