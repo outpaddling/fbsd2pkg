@@ -641,8 +641,6 @@ END {
 	gsub("^ ", "", use_tools);   # Remove leading space from first add       
 	printf("USE_TOOLS+=\t%s\n", use_tools);
     }
-    if ( use_python_distutils == 1 )
-	printf("PYDISTUTILSPKG=\tyes\n");
     if ( use_libtool == "yes" )
 	printf("USE_LIBTOOL=\tyes\n");
     if ( gnu_configure )
@@ -768,8 +766,8 @@ END {
     }
     if ( use_python_distutils )
     {
-	printf("# Verify that we shouldn't use egg.mk or extensions.mk instead.\n");
-	printf(".include \"../../lang/python/distutils.mk\"\n");
+	printf("# Verify that we shouldn't use distutils.mk or extensions.mk instead.\n");
+	printf(".include \"../../lang/python/egg.mk\"\n");
     }
     if ( perl_mod )
     {
