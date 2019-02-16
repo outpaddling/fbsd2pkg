@@ -288,7 +288,10 @@ BEGIN {
 	    else if ( $f == "zip" )
 		extract_sufx=".zip";
 	    else if ( $f == "perl5" )
-		use_perl=1
+	    {
+		use_perl=1;
+		use_tools = use_tools " perl";
+	    }
 	    else if ( $f == "python:run" )
 		use_python_run=1
 	    else if ( ( $f == "python" ) || ( $f ~ "python:" ) )
@@ -376,6 +379,11 @@ BEGIN {
 		only_for_platform = only_for_platform " *-*-" $f;
 	}
     }
+    else if ( $1 ~ "^ONLY_FOR_ARCHS_REASON=" )
+    {
+	only_for_platform_comment = $0;
+	gsub("ONLY_FOR_ARCHS_REASON=\t*", "# ", only_for_platform_comment);
+    }
     else if ( $1 ~ "_DEPENDS" )
     {
 	has_depends = 1;
@@ -434,7 +442,6 @@ BEGIN {
     else if ( $1 ~ "^USE_PERL" )
     {
 	gsub("configure", "pkgsrc", $2);
-	use_tools = use_tools " perl:" $2;
     }
     else if ( $1 ~ "^PKGNAMEPREFIX" )
     {
@@ -552,18 +559,18 @@ END {
     if ( explicit_distname != "" )
     {
 	printf("\nDISTNAME=\t%s\n", explicit_distname);
-	printf("PKGNAME=\t%s-${PV}\n", pkgname);
+	printf("PKGNAME=\t%s-%s\n", pkgname, portversion);
     }
     else if ( ( distname != pkgname ) || (distversionsuffix != "") )
     {
-	printf("\nDISTNAME=\t%s-${PV}%s\n", distname, distversionsuffix);
-	printf("PKGNAME=\t%s-${PV}\n", pkgname);
+	printf("\nDISTNAME=\t%s-%s%s\n", distname, portversion, distversionsuffix);
+	printf("PKGNAME=\t%s-%s\n", pkgname, portversion);
     }
     else
-	printf("\nDISTNAME=\t%s-${PV}\n", distname);
+	printf("\nDISTNAME=\t%s-%s\n", distname, portversion);
     if ( dist_subdir != "" )
     {
-	printf("\nPKGNAME=\t%s-${PV}\n", pkgname);
+	printf("\nPKGNAME=\t%s-%s\n", pkgname, portversion);
 	printf("DIST_SUBDIR=\t%s\n", dist_subdir);
     }
     printf("CATEGORIES=\t%s\n", categories);
@@ -602,7 +609,7 @@ END {
 	    gh_project=portname;
 	printf("GITHUB_PROJECT=\t%s\n", gh_project);
 	if ( gh_tagname == "" )
-	    gh_tagname="${PV}";
+	    gh_tagname=portversion;
 	if ( distversionprefix != "" )
 	    gh_tagname = distversionprefix gh_tagname;
 	printf("GITHUB_TAG=\t%s\n", gh_tagname);
@@ -633,7 +640,10 @@ END {
     }
     
     if ( only_for_platform != "" )
-	printf("\nONLY_FOR_PLATFORM=\t%s\n", only_for_platform);
+    {
+	printf("\n%s\n", only_for_platform_comment);
+	printf("ONLY_FOR_PLATFORM=\t%s\n", only_for_platform);
+    }
     
     printf("\n# Just assuming C and C++: Adjust this!\nUSE_LANGUAGES=\t%s\n", use_languages);
     if ( use_tools != "" )
