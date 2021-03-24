@@ -605,14 +605,14 @@ END {
 
     if ( use_github )
     {
-	if ( gh_project == "" )
-	    gh_project=portname;
-	printf("GITHUB_PROJECT=\t%s\n", gh_project);
-	if ( gh_tagname == "" )
-	    gh_tagname=portversion;
-	if ( distversionprefix != "" )
-	    gh_tagname = distversionprefix gh_tagname;
-	printf("GITHUB_TAG=\t%s\n", gh_tagname);
+	if ( gh_project != "" )
+	    printf("GITHUB_PROJECT=\t%s\n", gh_project);
+	if ( gh_tagname != "" )
+	{
+	    if ( distversionprefix != "" )
+		gh_tagname = distversionprefix gh_tagname;
+	    printf("GITHUB_TAG=\t%s\n", gh_tagname);
+	}
     }
     
     if ( extract_sufx != "" )
