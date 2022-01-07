@@ -114,7 +114,10 @@ BEGIN {
     }
     # After DISTVERSION*, or it will override all of them
     else if ( $1 ~ "^DISTVERSION" )
+    {
 	portversion = $2;
+	gsub("-", ".", portversion);
+    }
     else if ( $1 ~ "^DISTNAME" )
     {
 	explicit_distname = $2;
