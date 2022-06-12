@@ -610,10 +610,14 @@ END {
     {
 	if ( gh_project != "" )
 	    printf("GITHUB_PROJECT=\t%s\n", gh_project);
+	if ( distversionprefix != "" )
+	{
+	    if ( gh_tagname == "" )
+		gh_tagname = "${PKGVERSION_NOREV}"
+	    gh_tagname = distversionprefix gh_tagname;
+	}
 	if ( gh_tagname != "" )
 	{
-	    if ( distversionprefix != "" )
-		gh_tagname = distversionprefix gh_tagname;
 	    printf("GITHUB_TAG=\t%s\n", gh_tagname);
 	}
     }
