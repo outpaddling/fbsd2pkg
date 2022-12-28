@@ -453,6 +453,8 @@ BEGIN {
     }
     else if ( $1 ~ "^PKGNAMESUFFIX" )
 	pkgnamesuffix=$2;
+    else if ( $1 ~ "^WWW" )
+	homepage=$2;
     else if ( $0 != "" )
     {
 	if ( $1 ~ "REINPLACE_CMD" )
@@ -625,7 +627,7 @@ END {
     if ( extract_sufx != "" )
 	printf("EXTRACT_SUFX=\t%s\n", extract_sufx);
     
-    printf("\nMAINTAINER=\t%s\n", maintainer);
+    printf("\nOWNER=\t%s\n", maintainer);
     printf("HOMEPAGE=\t%s\n", homepage);
     printf("%s\n", comment);
     
