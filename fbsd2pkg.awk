@@ -160,7 +160,7 @@ BEGIN {
 	master_sites = master_sites $2;
 	if ( master_sites ~ "^SF" )
 	    sf_master_sites = master_sites;
-	else if ( master_sites == "CHEESESHOP" )
+	else if ( master_sites == "PYPI" )
 	    master_sites = "${MASTER_SITE_PYPI:=" substr(portname,1,1) "/" portname "/}";
 	else if ( master_sites == "CPAN" )
 	{
@@ -533,6 +533,12 @@ BEGIN {
 	    printf("\n");
 	    ++subst_file;
 	}
+	#else if ( $0 ~ "PYTHON_PKGNAMEPREFIX.*PY_FLAVOR}$" )
+	#{
+	    #gsub("PYTHON_PKGNAMEPREFIX", "PYPKGPREFIX", $0);
+	    #gsub(":",":../../", $0);
+	    #gsub("@${PY_FLAVOR}", "", $0);
+	#}
 	else
 	{
 	    # Convert what we can in FreeBSD ports code that's left commented out
@@ -627,7 +633,7 @@ END {
     if ( extract_sufx != "" )
 	printf("EXTRACT_SUFX=\t%s\n", extract_sufx);
     
-    printf("\nOWNER=\t%s\n", maintainer);
+    printf("\nOWNER=\t\t%s\n", maintainer);
     printf("HOMEPAGE=\t%s\n", homepage);
     printf("%s\n", comment);
     
