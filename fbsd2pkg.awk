@@ -422,6 +422,11 @@ BEGIN {
 	gh_project = $2;
     else if ( $1 ~ "^GH_TAGNAME")
 	gh_tagname = $2;
+    else if ( $1 ~ "^GH_TUPLE" )
+    {
+	gh_submodules = $2;
+	gsub(":", " ", gh_submodules);
+    }
     # Deprecated in favor of USES=, but leave it in for now
     else if ( $1 ~ "^USE_AUTOTOOLS" )
     {
@@ -627,6 +632,10 @@ END {
 	if ( gh_tagname != "" )
 	{
 	    printf("GITHUB_TAG=\t%s\n", gh_tagname);
+	}
+	if ( gh_submodules != "" )
+	{
+	    printf("GITHUB_SUBMODULES+=\t%s\n", gh_submodules)
 	}
     }
     
