@@ -2,3 +2,5 @@
 Support quotes strings with spaces in var assignments
 	LIBS="-L${LOCALBASE}/lib -llib"
 
+.include "../../devel/py-cython/tool.mk"
+
