@@ -801,7 +801,7 @@ END {
     if ( use_python_distutils )
     {
 	printf("# Verify that we shouldn't use distutils.mk or extensions.mk instead.\n");
-	printf(".include \"../../lang/python/egg.mk\"\n");
+	printf(".include \"../../lang/python/wheel.mk\"\n");
     }
     if ( perl_mod )
     {
