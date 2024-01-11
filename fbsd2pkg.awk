@@ -148,9 +148,14 @@ BEGIN {
     else if ( $1 ~ "^CATEGORIES" )
     {
 	if ( $2 == "wip" )
-	    categories = $3;
+	    start_field = 3;
 	else
-	    categories = $2;
+	    start_field = 2;
+	# Add first category, then the rest separated by spaces
+	categories = $start_field;
+	for (f = start_field + 1; f <= NF; ++f) {
+	    categories = categories " " $f;
+	}
     }
     # Check this before MASTER_SITES!
     else if ( $1 ~ "^MASTER_SITE_SUBDIR" )
@@ -564,29 +569,36 @@ BEGIN {
 }
 
 END {
-    if ( pkgnameprefix != "" )
-    {
-	pkgname = pkgnameprefix pkgname
-    }
+    full_pkgname = pkgname;
     if ( pkgnamesuffix != "" )
     {
-	pkgname = pkgname pkgnamesuffix
+	full_pkgname = full_pkgname pkgnamesuffix
+    }
+    full_pkgname = full_pkgname "-" portversion;
+    
+    # Eliminate redundant text by using existing variable
+    if ( full_pkgname = distname )
+	full_pkgname = "${DISTNAME}";
+    
+    if ( pkgnameprefix != "" )
+    {
+	full_pkgname = pkgnameprefix full_pkgname
     }
     if ( explicit_distname != "" )
     {
 	printf("\nDISTNAME=\t%s\n", explicit_distname);
-	printf("PKGNAME=\t%s-%s\n", pkgname, portversion);
+	printf("PKGNAME=\t%s\n", full_pkgname);
     }
-    else if ( ( distname != pkgname ) || (distversionsuffix != "") )
+    else if ( ( distname != full_pkgname ) || (distversionsuffix != "") )
     {
 	printf("\nDISTNAME=\t%s-%s%s\n", distname, portversion, distversionsuffix);
-	printf("PKGNAME=\t%s-%s\n", pkgname, portversion);
+	printf("PKGNAME=\t%s\n", full_pkgname);
     }
     else
 	printf("\nDISTNAME=\t%s-%s\n", distname, portversion);
     if ( dist_subdir != "" )
     {
-	printf("\nPKGNAME=\t%s-%s\n", pkgname, portversion);
+	printf("\nPKGNAME=\t%s\n", full_pkgname);
 	printf("DIST_SUBDIR=\t%s\n", dist_subdir);
     }
     printf("CATEGORIES=\t%s\n", categories);
@@ -643,7 +655,7 @@ END {
 	printf("EXTRACT_SUFX=\t%s\n", extract_sufx);
     
     printf("\nOWNER=\t\t%s\n", maintainer);
-    printf("HOMEPAGE=\t%s\n", homepage);
+    printf("# Replace PYPI pages with upstream\nHOMEPAGE=\t%s\n", homepage);
     printf("%s\n", comment);
     
     if ( meta_package )
@@ -667,6 +679,12 @@ END {
     {
 	printf("\n%s\n", only_for_platform_comment);
 	printf("ONLY_FOR_PLATFORM=\t%s\n", only_for_platform);
+    }
+    
+    if ( use_python ) {
+	printf("\n# Check these\nPYTHON_VERSIONS_INCOMPATIBLE=\t27\n");
+	printf("TOOL_DEPENDS+=\t${PYPKGPREFIX}-setuptools-[0-9]*:../../devel/py-setuptools\n");
+	printf("TOOL_DEPENDS+=\t${PYPKGPREFIX}-wheel-[0-9]*:../../devel/py-wheel\n");
     }
     
     printf("\n# Just assuming C and C++: Adjust this!\nUSE_LANGUAGES=\t%s\n", use_languages);
@@ -757,14 +775,14 @@ END {
     printf("DATADIR=\t${PREFIX}/share/%s\n", portname);
     printf("DOCSDIR=\t${PREFIX}/share/doc/%s\n", portname);
     printf("EXAMPLESDIR=\t${PREFIX}/share/examples/%s\n", portname);
-    if ( master_sites ~ "CHEESESHOP" )
+    if ( master_sites ~ "PYPI" )
     {
-	# Extract stem for cheeseshop subdir
+	# Extract stem for PYPI subdir
 	distname_stem = distname;
 	if ( (pos=index(distname_stem, "-")) != 0 )
 	    distname_stem = substr(distname_stem, 1, pos-1);
 
-	printf("CHEESESHOP=\thttp://pypi.python.org/packages/source/%c/%s/\n",
+	printf("PYPI=\thttp://pypi.python.org/packages/source/%c/%s/\n",
 		substr(distname_stem,1,1),distname_stem);
     }
     
