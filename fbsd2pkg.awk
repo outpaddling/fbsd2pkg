@@ -86,7 +86,10 @@ BEGIN {
 
     printf("###########################################################\n");
     printf("# Unconverted and partially converted FreeBSD port syntax:\n\n");
+    # Each SUBST block is assigned a numeric label to be edited by the user.
+    # This is also used as a temporary filename.
     subst_file=1;
+    bl3_tmp="fbsd2pkg-tmp-bl3"
     use_languages="c c++";
 }
 
@@ -179,6 +182,7 @@ BEGIN {
 	
 	get_continued_line();
 	master_sites = master_sites continued_line;
+	gsub("\\${DISTVERSION}", "\\${PKGVERSION_NOREV}", master_sites);
     }
     else if ( $1 ~ "^MAINTAINER" )
     {
@@ -392,6 +396,35 @@ BEGIN {
 	only_for_platform_comment = $0;
 	gsub("ONLY_FOR_ARCHS_REASON=\t*", "# ", only_for_platform_comment);
     }
+    else if ( $1 ~ "LIB_DEPENDS" )
+    {
+	# FIXME: Handle multiple ports in one LIB_DEPENDS line
+	# with or without continuation
+	has_depends = 1;
+	n = split($2, dep, ":")
+	if ( n == 2 )
+	{
+	    package=dep[2];
+	    pkg_path=pkgsrc_dir "/" package
+	    bl3_path=pkg_path "/buildlink3.mk"
+	    if ( system("/usr/bin/stat " bl3_path " > /dev/null") == 0 )
+	    {
+		# Convert LIB_DEPEND to a bl3 include
+		printf("# Converted from %s\n", $0) >> bl3_tmp;
+		printf(".include \"../../%s/buildlink3.mk\"\n", package) >> bl3_tmp;
+	    }
+	    else if ( system("/usr/bin/stat " pkg_path " > /dev/null") == 0 )
+	    {
+		# Copy the spec and category/port
+		printf("DEPENDS+=\t%s:../../%s\n", dep[1], dep[2]);
+	    }
+	    else
+	    {
+		printf("# %s\n", $0);
+	    }
+	}
+    }
+    # FIXME: Do same as above for BUILD_DEPENDS -> TOOL_DEPENDS
     else if ( $1 ~ "_DEPENDS" )
     {
 	has_depends = 1;
@@ -834,6 +867,11 @@ END {
 	{
 	    printf("# Guess based on USES=\n.include \"../../%s/buildlink3.mk\"\n", pkgs[c]);
 	}
+    }
+    # bl3 includes converted from LIB_DEPENDS earlier
+    if ( bl3_tmp != "" )
+    {
+	system("cat " bl3_tmp " && rm -f " bl3_tmp);
     }
     if ( has_depends )
     {

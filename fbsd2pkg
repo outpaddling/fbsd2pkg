@@ -133,6 +133,7 @@ if [ $new_pkg = 1 ]; then
     # script has ${PREFIX} prepended, so that should be removed before
     # importing.
     awk -v maintainer=$maintainer -v homepage=$homepage \
+	-v pkgsrc_dir=$(auto-pkgsrc-dir) \
 	-f fbsd2pkg.awk \
 	$port_path/Makefile > Makefile
     pause
